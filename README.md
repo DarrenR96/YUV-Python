@@ -4,6 +4,9 @@ Simple function for reading in YUV 420 Files in Python
 ## Usage
 Takes in path to YUV file and resolution of the file (eg. 1920x1080) and returns three numpy arrays, one for Y, U and V channels of dimensions (# of frames * height * width) for Y and (# of frames * height/2 * width/2) for U and V. You can also upsample to include full sized U and V arrays.
 
+readYUV420 reads the entire sequence into memory
+readYUV420Range reads the range into memory
+
 
 ```python
 from yuv420 import readYUV420, readYUV420Range, writeYUV420
