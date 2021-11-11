@@ -52,3 +52,16 @@ def readYUV420Range(name: str, resolution: tuple, range: tuple, upsampleUV: bool
         U = U.repeat(2, axis=1).repeat(2, axis=2)
         V = V.repeat(2, axis=1).repeat(2, axis=2)
     return Y, U, V
+
+
+def writeYUV420(name: str, Y, U, V, downsample=True):
+    towrite = bytearray()
+    if downsample:
+        U = U[:, ::2, ::2]
+        V = V[:, ::2, ::2]
+    for i in range(Y.shape[0]):
+        towrite.extend(Y[i].tobytes())
+        towrite.extend(U[i].tobytes())
+        towrite.extend(V[i].tobytes())
+    with open(name, "wb") as destination:
+        destination.write(towrite)
