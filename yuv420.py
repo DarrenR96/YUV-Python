@@ -44,6 +44,51 @@ def readYUV420Range(name: str, resolution: tuple, range: tuple, upsampleUV: bool
         V = V.repeat(2, axis=1).repeat(2, axis=2)
     return Y, U, V
 
+def readYUV420RangePatches(name: str, resolution: tuple, frameRange: tuple, patchLoc: tuple, patchSize: tuple, upsampleUV: bool = False):
+    width = resolution[0]
+    height = resolution[1]
+    patchLoc_w = patchLoc[0]
+    patchLoc_h = patchLoc[1]
+    patchSize_w = patchSize[0]
+    patchSize_h = patchSize[1]
+    bytesY = int(height * width)
+    bytesUV = int(bytesY/4)
+    bytesYUV = bytesY + 2*bytesUV
+    Y = []
+    U = []
+    V = []
+    startLocation = frameRange[0]
+    endLocation = frameRange[1] + 1
+    for frameCnt in range(startLocation, endLocation, 1):
+        startLocationBytes = (frameCnt) * (bytesYUV)
+        YPatches = []
+        UPatches = []
+        VPatches = []
+        for _row in range(patchSize_h):
+            offSetBytesStartY = (patchLoc_h * width) + patchLoc_w + startLocationBytes + (_row*width)
+            offSetBytesEndY = offSetBytesStartY + patchSize_w
+            with open(name,"rb") as yuvFile:
+                YPatches.append(np.fromfile(yuvFile, np.uint8, offSetBytesEndY-offSetBytesStartY, offset=offSetBytesStartY).reshape(patchSize_w))
+        for _row in range(patchSize_h//2):
+            offSetBytesStartU = startLocationBytes + bytesY + (patchLoc_h//2 * width//2) +  patchLoc_w//2 + (_row*(width//2))
+            offSetBytesEndU = offSetBytesStartU + patchSize_w//2
+            offSetBytesStartV = startLocationBytes + bytesY + bytesUV + (patchLoc_h//2 * width//2) +  patchLoc_w//2 + (_row*(width//2))
+            offSetBytesEndV = offSetBytesStartV + patchSize_w//2
+            with open(name,"rb") as yuvFile:
+                UPatches.append(np.fromfile(yuvFile, np.uint8, offSetBytesEndU-offSetBytesStartU, offset=offSetBytesStartU).reshape(patchSize_w//2))
+            with open(name,"rb") as yuvFile:
+                VPatches.append(np.fromfile(yuvFile, np.uint8, offSetBytesEndV-offSetBytesStartV, offset=offSetBytesStartV).reshape(patchSize_w//2))
+        YPatches = np.reshape(np.concatenate(YPatches,0), (patchSize_w,patchSize_h))
+        UPatches = np.reshape(np.concatenate(UPatches,0), (patchSize_w//2,patchSize_h//2))
+        VPatches = np.reshape(np.concatenate(VPatches,0), (patchSize_w//2,patchSize_h//2))
+        Y.append(YPatches), U.append(UPatches), V.append(VPatches)
+    Y = np.stack(Y, 0)
+    U = np.stack(U, 0)
+    V = np.stack(V, 0)
+    if upsampleUV:
+        U = U.repeat(2, axis=1).repeat(2, axis=2)
+        V = V.repeat(2, axis=1).repeat(2, axis=2)
+    return Y, U, V
 
 def writeYUV420(name: str, Y, U, V, downsample=True):
     towrite = bytearray()
