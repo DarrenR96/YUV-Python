@@ -91,6 +91,9 @@ def readYUV420RangePatches(name: str, resolution: tuple, frameRange: tuple, patc
     return Y, U, V
 
 def writeYUV420(name: str, Y, U, V, downsample=True):
+    Y = Y.astype(np.uint8)
+    U = U.astype(np.uint8)
+    V = V.astype(np.uint8)
     towrite = bytearray()
     if downsample:
         U = U[:, ::2, ::2]
